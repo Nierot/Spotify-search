@@ -12,7 +12,6 @@ async function initSpotify() {
         clientSecret: secrets['clientSecret']
       });
       
-    // Get an access token and 'save' it using a setter
     spotifyApi.clientCredentialsGrant().then(
         data => {
             console.log('The access token is ' + data.body['access_token']);
