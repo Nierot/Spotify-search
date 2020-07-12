@@ -1,6 +1,7 @@
 const secrets = require('./secrets.json')
 const SpotifyWebApi = require('spotify-web-api-node')
 const express = require('express')
+const cors = require('cors');
 const app = express();
 const port = 6969;
 let spotify;
@@ -12,7 +13,7 @@ async function initSpotify() {
         clientSecret: secrets['clientSecret']
       });
       
-    spotifyApi.clientCredentialsGrant().then(
+    await spotifyApi.clientCredentialsGrant().then(
         data => {
             console.log('The access token is ' + data.body['access_token']);
             spotifyApi.setAccessToken(data.body['access_token']);
@@ -32,10 +33,15 @@ async function searchSpotify(query) {
     let resp = 't';
     await spotify.searchTracks(query)
         .then(data => resp = data,
-              err => resp = err);
+              async err => {
+                  if (err.statusCode === 401) spotify = await initSpotify();
+                  resp = searchSpotify(query);
+                });
     console.log(resp)
     return resp;
 }
+
+app.use(cors());
 
 app.get('/', (req, res) => {
     res.send('<form action="/search" method="GET>' +
@@ -46,7 +52,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/search', async (req, res) => {
-    res.json(await searchSpotify(req.query.query))
+    res.json(await searchSpotify(req.query.query));
 })
 
 app.use(express.static('public'));
