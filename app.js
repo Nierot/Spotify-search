@@ -7,7 +7,7 @@ const port = 6969;
 let spotify;
 
 async function initSpotify() {
-    console.log("Initializing Spotify")
+    console.log("Initializing Spotify");
     var spotifyApi = new SpotifyWebApi({
         clientId: secrets['clientId'],
         clientSecret: secrets['clientSecret']
@@ -28,14 +28,15 @@ async function initSpotify() {
 
 async function searchSpotify(query) {
     console.log(query)
-    console.log(`Spotify Object: ${spotify}`)
-
     let resp = 't';
     await spotify.searchTracks(query)
         .then(data => resp = data,
               async err => {
-                  if (err.statusCode === 401) spotify = await initSpotify();
-                  resp = searchSpotify(query);
+                  if (err.statusCode !== 200) {
+                      spotify = await initSpotify();
+                  }
+                  await new Promise(r => setTimeout(r, 2000));
+                  resp = await searchSpotify(query);
                 });
     console.log(resp)
     return resp;
